@@ -134,6 +134,18 @@ func (s *testIntegrationSuite) TestMiscellaneousBuiltin(c *C) {
 			c.Assert(len(list[4]), Equals, 12)
 		}
 	}
+	tk.MustExec("drop table if exists t1;")
+	tk.MustExec(`create table t1(
+        a int,
+        b int not null,
+        c int not null default 0,
+        d int default 0,
+        unique key(b,c),
+        unique key(b,d)
+);`)
+	tk.MustExec("insert into t1 (a,b) values(1,10),(1,20),(2,30),(2,40);")
+	tk.MustQuery("select any_value(a), sum(b) from t1;").Check(testkit.Rows("1 100"))
+	tk.MustQuery("select a,any_value(b),sum(c) from t1 group by a;").Check(testkit.Rows("1 10 0", "2 30 0"))
 }
 
 func (s *testIntegrationSuite) TestConvertToBit(c *C) {
